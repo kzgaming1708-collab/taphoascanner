@@ -30,14 +30,12 @@ function handleManualSearch() {
   const query = document.getElementById('manual-barcode-input').value.trim();
   if (!query) return;
 
-  // Tìm theo mã vạch chính xác
   if (products[query]) {
     addToCart(query, products[query].name, products[query].price);
     document.getElementById('manual-barcode-input').value = "";
     return;
   }
 
-  // Tìm theo tên tương đối
   const foundBarcode = Object.keys(products).find(code => 
     products[code].name.toLowerCase().includes(query.toLowerCase())
   );
@@ -46,7 +44,6 @@ function handleManualSearch() {
     addToCart(foundBarcode, products[foundBarcode].name, products[foundBarcode].price);
     document.getElementById('manual-barcode-input').value = "";
   } else {
-    // Nếu nhập mã mới chưa có trong kho
     processBarcode(query);
   }
 }
@@ -151,7 +148,6 @@ function checkout() {
   renderCart();
 }
 
-// In Hóa Đơn Chuẩn K80
 function printReceipt() {
   if (cart.length === 0) {
     alert("Giỏ hàng đang trống!");
@@ -203,7 +199,6 @@ function printReceipt() {
   window.print();
 }
 
-// Xuất/Nhập dữ liệu kho hàng (JSON)
 function exportCatalog() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(products, null, 2));
   const downloadAnchor = document.createElement('a');

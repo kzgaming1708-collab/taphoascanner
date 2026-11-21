@@ -7,7 +7,6 @@ let lastCode = "";
 let lastScanTime = 0;
 const COOLDOWN_MS = 1500;
 
-// Khởi tạo Decode Hints cho ZXing: Giới hạn định dạng mã vạch để tăng hiệu năng CPU
 function getZXingHints() {
   const hints = new Map();
   const formats = [
@@ -29,8 +28,8 @@ async function loadCameraDevices() {
     const devices = await tempReader.getVideoInputDevices();
     select.innerHTML = '';
 
-    if (devices.length === 0) {
-      select.innerHTML = '<option value="">Không tìm thấy camera</option>';
+    if (!devices || devices.length === 0) {
+      select.innerHTML = '<option value="">Khởi tạo Camera mặc định</option>';
       return;
     }
 
@@ -41,8 +40,8 @@ async function loadCameraDevices() {
       select.appendChild(option);
     });
   } catch (err) {
-    console.error("Lỗi lấy danh sách camera:", err);
-    select.innerHTML = '<option value="">Cần cấp quyền camera</option>';
+    console.warn("Chưa lấy được danh sách camera:", err);
+    select.innerHTML = '<option value="">Camera Mặc Định</option>';
   }
 }
 
@@ -56,9 +55,14 @@ async function startScan() {
     codeReader = new ZXing.BrowserMultiFormatReader(hints);
     
     const selectedDeviceId = document.getElementById('camera-select').value;
-    const constraints = selectedDeviceId 
-      ? { video: { deviceId: { exact: selectedDeviceId } } }
-      : { video: { facingMode: "environment" } };
+    
+    // Linh hoạt cấu hình: Ưu tiên thiết bị được chọn, nếu không có thì lấy luồng camera cơ bản
+    let constraints;
+    if (selectedDeviceId) {
+      constraints = { video: { deviceId: { exact: selectedDeviceId } } };
+    } else {
+      constraints = { video: { facingMode: "environment" } };
+    }
 
     document.getElementById('start-btn').classList.add('hidden');
     document.getElementById('stop-btn').classList.remove('hidden');
@@ -66,7 +70,8 @@ async function startScan() {
     document.getElementById('scan-status').innerText = "🟢 Đang quét mã...";
     isScanning = true;
 
-    codeReader.decodeFromConstraints(constraints, 'video', (result, error) => {
+    // Decode trực tiếp vào thẻ video
+    await codeReader.decodeFromConstraints(constraints, 'video', (result, error) => {
       if (result) {
         const barcode = result.getText();
         const now = Date.now();
@@ -89,13 +94,24 @@ async function startScan() {
       }
     });
 
-    // Kiểm tra khả năng bật Đèn Flash (Torch)
     setTimeout(checkTorchSupport, 1000);
 
   } catch (err) {
-    console.error(err);
-    alert("Không thể truy cập camera. Vui lòng cấp quyền sử dụng camera trong trình duyệt!");
-    stopScan();
+    console.error("Lỗi khởi tạo camera:", err);
+    
+    // Nếu thử camera sau thất bại (trên Laptop/PC), tự động fallback sang camera mặc định bất kỳ
+    try {
+      await codeReader.decodeFromConstraints({ video: true }, 'video', (result) => {
+        if (result) {
+          document.getElementById('result-code').innerText = result.getText();
+          processBarcode(result.getText());
+          playBeepAndVibrate();
+        }
+      });
+    } catch (fallbackErr) {
+      alert("Không thể mở Camera! Bạn hãy kiểm tra lại quyền truy cập camera trên trình duyệt hoặc đổi giao thức sang HTTPS/Localhost.");
+      stopScan();
+    }
   }
 }
 
@@ -113,10 +129,9 @@ function stopScan() {
   }
 }
 
-// Bật/Tắt Flash (Trợ sáng)
 async function checkTorchSupport() {
   const videoElem = document.getElementById('video');
-  if (videoElem.srcObject) {
+  if (videoElem && videoElem.srcObject) {
     const track = videoElem.srcObject.getVideoTracks()[0];
     const capabilities = track.getCapabilities ? track.getCapabilities() : {};
     if (capabilities.torch) {
@@ -137,7 +152,6 @@ async function toggleTorch() {
   }
 }
 
-// Âm thanh Beep + Rung
 function playBeepAndVibrate() {
   if (navigator.vibrate) {
     navigator.vibrate(100);
@@ -154,7 +168,7 @@ function playBeepAndVibrate() {
     osc.start();
     osc.stop(audioCtx.currentTime + 0.1);
   } catch (e) {
-    console.log("Audio không hoạt động nếu người dùng chưa tương tác");
+    console.log("Audio không phát được do chưa tương tác");
   }
 }
 

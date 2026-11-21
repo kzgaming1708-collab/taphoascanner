@@ -6,7 +6,7 @@
   <title>Tạp Hóa Web Scanner Pro</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- ZXing JS Library CDN (Giữ nguyên thư viện) -->
+  <!-- ZXing JS Library CDN -->
   <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
   <!-- Custom CSS -->
   <link rel="stylesheet" href="style.css">
@@ -20,9 +20,9 @@
     <p class="text-xs text-gray-500">Tối ưu quét mã vạch & Quản lý đơn hàng</p>
   </header>
 
-  <!-- Khung Viewport Camera -->
+  <!-- Khung Viewport Camera (Đã thêm autoplay, muted, playsinline chống đen màn hình) -->
   <div class="bg-black rounded-xl overflow-hidden relative mb-3 shadow-lg h-60 flex items-center justify-center border-2 border-blue-500/30">
-    <video id="video" class="w-full h-full object-cover"></video>
+    <video id="video" class="w-full h-full object-cover" autoplay muted playsinline></video>
     
     <!-- Khung ngắm & vạch laser -->
     <div id="scanner-overlay" class="absolute inset-0 pointer-events-none hidden">
@@ -133,10 +133,10 @@
     </div>
   </div>
 
-  <!-- Khung in hóa đơn (Ẩn trên màn hình, hiện khi in) -->
+  <!-- Khung in hóa đơn -->
   <div id="printable-receipt" class="hidden"></div>
 
- <!-- Đổi từ js/scanner.js và js/app.js thành đường dẫn trực tiếp -->
+  <!-- Nhúng trực tiếp 2 file JS chung thư mục -->
   <script src="scanner.js"></script>
   <script src="app.js"></script>
 </body>

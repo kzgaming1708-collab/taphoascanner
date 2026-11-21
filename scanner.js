@@ -7,41 +7,34 @@ let lastCode = "";
 let lastScanTime = 0;
 const COOLDOWN_MS = 1500;
 
-function getZXingHints() {
-  const hints = new Map();
-  const formats = [
-    ZXing.BarcodeFormat.EAN_13,
-    ZXing.BarcodeFormat.EAN_8,
-    ZXing.BarcodeFormat.CODE_128,
-    ZXing.BarcodeFormat.UPC_A,
-    ZXing.BarcodeFormat.QR_CODE
-  ];
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
-  return hints;
-}
-
-// Tải danh sách camera vào dropdown
 async function loadCameraDevices() {
   const select = document.getElementById('camera-select');
   try {
-    const tempReader = new ZXing.BrowserMultiFormatReader();
-    const devices = await tempReader.getVideoInputDevices();
+    codeReader = new ZXing.BrowserMultiFormatReader();
+    const videoInputDevices = await codeReader.getVideoInputDevices();
+    
     select.innerHTML = '';
-
-    if (!devices || devices.length === 0) {
-      select.innerHTML = '<option value="">Khởi tạo Camera mặc định</option>';
+    if (!videoInputDevices || videoInputDevices.length === 0) {
+      select.innerHTML = '<option value="">Không tìm thấy Camera</option>';
       return;
     }
 
-    devices.forEach((device, index) => {
+    let selectedIndex = 0;
+    videoInputDevices.forEach((device, index) => {
       const option = document.createElement('option');
       option.value = device.deviceId;
       option.text = device.label || `Camera ${index + 1}`;
+      
+      const label = (device.label || '').toLowerCase();
+      if (label.includes('back') || label.includes('rear') || label.includes('sau') || label.includes('environment')) {
+        selectedIndex = index;
+      }
       select.appendChild(option);
     });
+
+    select.selectedIndex = selectedIndex;
   } catch (err) {
-    console.warn("Chưa lấy được danh sách camera:", err);
-    select.innerHTML = '<option value="">Camera Mặc Định</option>';
+    console.error("Lỗi lấy danh sách camera:", err);
   }
 }
 
@@ -49,20 +42,10 @@ async function startScan() {
   if (isScanning) return;
 
   try {
-    document.getElementById('scan-status').innerText = "⏳ Đang kết nối Camera...";
-    
-    const hints = getZXingHints();
-    codeReader = new ZXing.BrowserMultiFormatReader(hints);
-    
+    document.getElementById('scan-status').innerText = "⏳ Đang bật Camera...";
+    if (!codeReader) codeReader = new ZXing.BrowserMultiFormatReader();
+
     const selectedDeviceId = document.getElementById('camera-select').value;
-    
-    // Linh hoạt cấu hình: Ưu tiên thiết bị được chọn, nếu không có thì lấy luồng camera cơ bản
-    let constraints;
-    if (selectedDeviceId) {
-      constraints = { video: { deviceId: { exact: selectedDeviceId } } };
-    } else {
-      constraints = { video: { facingMode: "environment" } };
-    }
 
     document.getElementById('start-btn').classList.add('hidden');
     document.getElementById('stop-btn').classList.remove('hidden');
@@ -70,8 +53,7 @@ async function startScan() {
     document.getElementById('scan-status').innerText = "🟢 Đang quét mã...";
     isScanning = true;
 
-    // Decode trực tiếp vào thẻ video
-    await codeReader.decodeFromConstraints(constraints, 'video', (result, error) => {
+    await codeReader.decodeFromVideoDevice(selectedDeviceId || null, 'video', (result, error) => {
       if (result) {
         const barcode = result.getText();
         const now = Date.now();
@@ -97,21 +79,9 @@ async function startScan() {
     setTimeout(checkTorchSupport, 1000);
 
   } catch (err) {
-    console.error("Lỗi khởi tạo camera:", err);
-    
-    // Nếu thử camera sau thất bại (trên Laptop/PC), tự động fallback sang camera mặc định bất kỳ
-    try {
-      await codeReader.decodeFromConstraints({ video: true }, 'video', (result) => {
-        if (result) {
-          document.getElementById('result-code').innerText = result.getText();
-          processBarcode(result.getText());
-          playBeepAndVibrate();
-        }
-      });
-    } catch (fallbackErr) {
-      alert("Không thể mở Camera! Bạn hãy kiểm tra lại quyền truy cập camera trên trình duyệt hoặc đổi giao thức sang HTTPS/Localhost.");
-      stopScan();
-    }
+    console.error("Lỗi mở camera:", err);
+    alert("Không mở được camera. Hãy chắc chắn bạn đang dùng HTTPS hoặc Localhost và đã cấp quyền camera!");
+    stopScan();
   }
 }
 
@@ -148,7 +118,7 @@ async function toggleTorch() {
     await currentTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] });
     document.getElementById('torch-btn').classList.toggle('bg-yellow-600', isTorchOn);
   } catch (e) {
-    console.log("Không thể bật/tắt flash", e);
+    console.log("Không bật được flash", e);
   }
 }
 
@@ -167,9 +137,7 @@ function playBeepAndVibrate() {
     gain.gain.value = 0.15;
     osc.start();
     osc.stop(audioCtx.currentTime + 0.1);
-  } catch (e) {
-    console.log("Audio không phát được do chưa tương tác");
-  }
+  } catch (e) {}
 }
 
 document.addEventListener("DOMContentLoaded", loadCameraDevices);

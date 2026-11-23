@@ -1,4 +1,4 @@
-// 1. Khởi tạo kết nối Supabase (Đã sửa URL chuẩn lfnzgiuifrnxblekneeu)
+// 1. Khởi tạo kết nối Supabase
 const SUPABASE_URL = 'https://lfnzgiuifrnxblekneeu.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmbnpnaXVpZnJueGJsZWtuZWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU0MTg2NDMsImV4cCI6MjExMDk5NDY0M30.2thXwSgKRrdl9PbUuiiUM-Tqek0gDzAlm-dH6MVjUks';
 
@@ -15,6 +15,17 @@ try {
 
 // Giỏ hàng lưu trên máy hiện tại
 let cart = [];
+
+// Ép thẻ video giữ nguyên vị trí inline trên iPhone Safari
+document.addEventListener("DOMContentLoaded", () => {
+  const video = document.getElementById('video');
+  if (video) {
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
+    video.setAttribute('muted', 'true');
+    video.setAttribute('autoplay', 'true');
+  }
+});
 
 // 2. Tra cứu sản phẩm từ Database Supabase dùng chung
 async function fetchProductFromDB(barcode) {

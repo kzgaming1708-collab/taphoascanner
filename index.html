@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Tạp Hóa Web Scanner Pro</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,9 +20,9 @@
     <p class="text-xs text-gray-500">Tối ưu quét mã vạch & Quản lý đơn hàng</p>
   </header>
 
-  <!-- Khung Viewport Camera -->
+  <!-- Khung Viewport Camera (Tối ưu chống tràn màn hình trên iOS) -->
   <div class="bg-black rounded-xl overflow-hidden relative mb-3 shadow-lg h-60 flex items-center justify-center border-2 border-blue-500/30">
-    <video id="video" class="w-full h-full object-cover"></video>
+    <video id="video" class="w-full h-full object-cover" playsinline webkit-playsinline muted autoplay></video>
     
     <!-- Khung ngắm & vạch laser -->
     <div id="scanner-overlay" class="absolute inset-0 pointer-events-none hidden">

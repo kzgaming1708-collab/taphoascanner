@@ -20,9 +20,9 @@
     <p class="text-xs text-gray-500">Tối ưu quét mã vạch & Quản lý đơn hàng</p>
   </header>
 
-  <!-- Khung Viewport Camera (Đã thêm autoplay, muted, playsinline chống đen màn hình) -->
+  <!-- Khung Viewport Camera -->
   <div class="bg-black rounded-xl overflow-hidden relative mb-3 shadow-lg h-60 flex items-center justify-center border-2 border-blue-500/30">
-    <video id="video" class="w-full h-full object-cover" autoplay muted playsinline></video>
+    <video id="video" class="w-full h-full object-cover"></video>
     
     <!-- Khung ngắm & vạch laser -->
     <div id="scanner-overlay" class="absolute inset-0 pointer-events-none hidden">
@@ -133,10 +133,12 @@
     </div>
   </div>
 
-  <!-- Khung in hóa đơn -->
+  <!-- Khung in hóa đơn (Ẩn trên màn hình, hiện khi in) -->
   <div id="printable-receipt" class="hidden"></div>
 
-  <!-- Nhúng trực tiếp 2 file JS chung thư mục -->
+  <!-- Thư viện Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Script quét camera & điều khiển ứng dụng -->
   <script src="scanner.js"></script>
   <script src="app.js"></script>
 </body>

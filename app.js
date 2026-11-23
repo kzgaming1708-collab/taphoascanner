@@ -1,5 +1,5 @@
-// 1. Khởi tạo kết nối Supabase với Legacy Anon Key
-const SUPABASE_URL = 'https://lfnzgiuifmxblekneeu.supabase.co';
+// 1. Khởi tạo kết nối Supabase (Đã sửa URL chuẩn lfnzgiuifrnxblekneeu)
+const SUPABASE_URL = 'https://lfnzgiuifrnxblekneeu.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmbnpnaXVpZnJueGJsZWtuZWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU0MTg2NDMsImV4cCI6MjExMDk5NDY0M30.2thXwSgKRrdl9PbUuiiUM-Tqek0gDzAlm-dH6MVjUks';
 
 let db = null;

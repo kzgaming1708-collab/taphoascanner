@@ -10,7 +10,7 @@ try {
     console.error("Chưa tải được thư viện Supabase JS!");
   }
 } catch (e) {
-  console.error("Lỗi khởi tạo Supabase:", e);
+  console.error("Lỗi kết nối Supabase:", e);
 }
 
 // Giỏ hàng lưu trên máy hiện tại
@@ -42,7 +42,7 @@ async function onBarcodeDetected(barcode) {
   if (!barcode) return;
   barcode = String(barcode).trim();
 
-  // Cập nhật giao diện mã vừa quét
+  // Hiển thị mã vạch lên giao diện
   const resultCodeEl = document.getElementById('result-code');
   if (resultCodeEl) resultCodeEl.innerText = barcode;
   
@@ -53,38 +53,51 @@ async function onBarcodeDetected(barcode) {
   const product = await fetchProductFromDB(barcode);
 
   if (product) {
-    // Đã có trong DB -> Thêm vào giỏ hàng
+    // Đã có trong DB -> Thêm thẳng vào giỏ hàng
     addToCart(product.barcode, product.name, product.price);
   } else {
-    // Chưa có -> Mở Modal nhập tên và giá tiền sản phẩm mới
-    const modalBarcode = document.getElementById('modal-barcode');
+    // Chưa có -> Mở Modal và tự điền mã vạch vào khung nhập
+    const modalBarcode = document.getElementById('modal-barcode-input');
     const newName = document.getElementById('new-name');
     const newPrice = document.getElementById('new-price');
     const addModal = document.getElementById('add-modal');
 
-    if (modalBarcode) modalBarcode.innerText = barcode;
+    if (modalBarcode) modalBarcode.value = barcode;
     if (newName) newName.value = '';
     if (newPrice) newPrice.value = '';
     if (addModal) addModal.classList.remove('hidden');
   }
 }
 
-// --- BỘ TƯƠNG THÍCH VỚI SCANNER.JS (Đảm bảo Camera gọi hàm nào cũng chạy) ---
+// --- BỘ TƯƠNG THÍCH SCANNER.JS ---
 window.onBarcodeDetected = onBarcodeDetected;
 window.onBarcodeScanned = onBarcodeDetected;
 window.handleBarcodeScanned = onBarcodeDetected;
 window.onScanSuccess = onBarcodeDetected;
 window.processBarcode = onBarcodeDetected;
 
-// 4. Lưu sản phẩm mới lên Supabase (Dùng chung cho tất cả máy)
+// 4. Mở Modal thủ công (Khi bấm nút "+ Kho")
+function openAddModalDirectly() {
+  const modalBarcode = document.getElementById('modal-barcode-input');
+  const newName = document.getElementById('new-name');
+  const newPrice = document.getElementById('new-price');
+  const addModal = document.getElementById('add-modal');
+
+  if (modalBarcode) modalBarcode.value = '';
+  if (newName) newName.value = '';
+  if (newPrice) newPrice.value = '';
+  if (addModal) addModal.classList.remove('hidden');
+}
+
+// 5. Lưu sản phẩm mới lên Supabase DB
 async function saveNewProduct() {
-  const barcode = document.getElementById('modal-barcode').innerText.trim();
+  const barcode = document.getElementById('modal-barcode-input').value.trim();
   const name = document.getElementById('new-name').value.trim();
   const priceInput = document.getElementById('new-price').value.trim();
   const price = Number(priceInput);
 
-  if (!name || isNaN(price) || price <= 0) {
-    alert("Vui lòng nhập đầy đủ tên và giá hợp lệ!");
+  if (!barcode || !name || isNaN(price) || price <= 0) {
+    alert("⚠️ Vui lòng nhập đầy đủ Mã vạch, Tên sản phẩm và Đơn giá hợp lệ!");
     return;
   }
 
@@ -93,22 +106,22 @@ async function saveNewProduct() {
     return;
   }
 
-  // Lưu hoặc cập nhật vào bảng products trên Supabase
+  // Đẩy dữ liệu lưu vào bảng products trên Supabase
   const { error } = await db
     .from('products')
-    .upsert({ barcode, name, price });
+    .upsert([{ barcode, name, price }], { onConflict: 'barcode' });
 
   if (error) {
     alert("❌ Lỗi khi lưu vào máy chủ: " + error.message);
-    console.error("Supabase error:", error);
+    console.error("Lỗi chi tiết Supabase:", error);
   } else {
-    alert("✅ Đã lưu sản phẩm vào cơ sở dữ liệu chung!");
+    alert(`✅ Đã lưu sản phẩm "${name}" (${price.toLocaleString('vi-VN')} VNĐ) lên hệ thống chung!`);
     addToCart(barcode, name, price);
     closeModal();
   }
 }
 
-// 5. Thêm vào giỏ hàng cục bộ & Cập nhật giao diện
+// 6. Thêm vào giỏ hàng cục bộ & Cập nhật giao diện
 function addToCart(barcode, name, price) {
   const existingItem = cart.find(item => item.barcode === barcode);
   if (existingItem) {
@@ -119,7 +132,7 @@ function addToCart(barcode, name, price) {
   renderCart();
 }
 
-// 6. Hiển thị danh sách giỏ hàng
+// 7. Hiển thị danh sách giỏ hàng
 function renderCart() {
   const cartList = document.getElementById('cart-list');
   const totalQtyEl = document.getElementById('total-qty');
@@ -187,7 +200,7 @@ function handleManualSearch() {
   }
 }
 
-// 7. Các tiện ích phụ trợ (Thanh toán, In bill, Xuất/Nhập dữ liệu)
+// 8. Tiện ích bổ sung
 function checkout() {
   if (cart.length === 0) {
     alert("Giỏ hàng đang trống!");
@@ -218,5 +231,5 @@ async function exportCatalog() {
 }
 
 function importCatalog() {
-  alert("Tính năng nhập JSON trực tiếp lên DB có thể thực hiện trong trang quản trị Supabase.");
+  alert("Tính năng nhập kho hàng loạt có thể thực hiện trực tiếp trong trang quản trị Supabase.");
 }
